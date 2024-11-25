@@ -12,9 +12,6 @@
 
 int old_rotary_switch_position = 0;
 
-//Todo:
-// - Implement the modules for the rotary switch
-
 void setup() 
 {
 	// Activate the serial communication

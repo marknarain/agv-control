@@ -1,5 +1,7 @@
 # AGV Control Library for ESP32
 
+Version 1.1 - 25.11.2024
+
 This repository contains a functions for controlling various components of the **Autonomous Guided Vehicle (AGV)**. The library is designed for the ESP32 microcontroller and provides modular functionality for interaction with the AGV's hardware.
 
 ## Features

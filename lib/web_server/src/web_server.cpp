@@ -90,7 +90,7 @@ void start_webserver()
         request->send(200, "text/plain", "ok");
     });
 
-    server.on("/HONK", HTTP_GET, [] (AsyncWebServerRequest *request) {
+    server.on("/HORN", HTTP_GET, [] (AsyncWebServerRequest *request) {
         horn_state = 1;
         request->send(200, "text/plain", "ok");
     });
