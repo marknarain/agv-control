@@ -10,3 +10,4 @@ void motor_init();
 void drive();
 void update_motor_config(int current_button_state);
 void drive_ramp();
+void set_motor_pause_time(int pause_time);

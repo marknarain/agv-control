@@ -124,3 +124,8 @@ void drive_ramp()
         }
     }
 }
+
+void set_motor_pause_time(int pause_time)
+{
+    motor_pause_time = pause_time;
+}
