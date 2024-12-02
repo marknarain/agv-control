@@ -9,25 +9,23 @@
 #define DIR_R 12
 #define STP_R 13
 
-#define FORWARD_PAUSE_TIME_US 3500
-#define BACKWARD_PAUSE_TIME_US 3500
-#define LEFT_PAUSE_TIME_US 4500
-#define RIGHT_PAUSE_TIME_US 4500
-
 #define DEFAULT_PAUSE_TIME_US 4000
 #define MIN_PAUSE_TIME_US 1000
+#define MAX_PAUSE_TIME_US 6000
 
 #define ACCELERATION_MS2 2
 
 static unsigned long old_accel_time;
 static unsigned long old_step_time;
 static int motor_pause_time;
+static int motor_state;
 static int old_button_state;
 
 void motor_init() 
 {
     motor_pause_time = DEFAULT_PAUSE_TIME_US;
     old_button_state = 0;
+    motor_state = 0;
 
     old_accel_time = micros();
     old_step_time = micros();
@@ -42,8 +40,32 @@ void motor_init()
     pinMode(STP_R, OUTPUT);
 }
 
+void set_pause_times(int forward_pause_time,
+               int left_pause_time, 
+               int right_pause_time, 
+               int backward_pause_time)
+{
+    switch (motor_state)
+    {
+    case MOTOR_FORWARD:
+        motor_pause_time = forward_pause_time;
+        break;
+    case MOTOR_LEFT:
+        motor_pause_time = left_pause_time;
+        break;
+    case MOTOR_RIGHT:
+        motor_pause_time = right_pause_time;
+        break;
+    case MOTOR_BACKWARD:
+        motor_pause_time = backward_pause_time;
+        break;
+    }
+}
+
 void update_motor_config(int current_button_state)
 {
+    motor_state = current_button_state;
+
     // If the switch is not in the STOP position, enable the motors
     if(current_button_state != MOTOR_STOP) 
     {
@@ -64,23 +86,19 @@ void update_motor_config(int current_button_state)
         {  
         case MOTOR_FORWARD: // forward
             digitalWrite(DIR_R, LOW);      // Motor right forward
-            digitalWrite(DIR_L,HIGH);     // Motor left forward (other direction, because mounted mirrored) 
-            motor_pause_time = FORWARD_PAUSE_TIME_US;
+            digitalWrite(DIR_L,HIGH);     // Motor left forward (other direction, because mounted mirrored)
             break;
         case MOTOR_LEFT: // left 
             digitalWrite(DIR_R, LOW);
             digitalWrite(DIR_L,LOW);
-            motor_pause_time = LEFT_PAUSE_TIME_US;
             break;
         case MOTOR_RIGHT:  // right
             digitalWrite(DIR_R, HIGH);
             digitalWrite(DIR_L,HIGH);
-            motor_pause_time = RIGHT_PAUSE_TIME_US;
             break;
         case MOTOR_BACKWARD:  // back
             digitalWrite(DIR_R, HIGH);
             digitalWrite(DIR_L,LOW);
-            motor_pause_time = BACKWARD_PAUSE_TIME_US;
             break;
         }
 
@@ -90,8 +108,13 @@ void update_motor_config(int current_button_state)
 
 // Lets the stepper motors drive one step. 
 // This happens based on the config of the motor direction.
-void drive()
+void drive(int forward_pause_time,
+           int left_pause_time, 
+           int right_pause_time, 
+           int backward_pause_time)
 {
+    set_pause_times(forward_pause_time, left_pause_time, right_pause_time, backward_pause_time);
+
     unsigned long current_time = micros();
 
     if (current_time - old_step_time > motor_pause_time)
@@ -109,7 +132,7 @@ void drive()
 // This lets the motors accelerate.
 void drive_ramp()
 {
-    drive();
+    drive(USE_DEFAULT_PAUSE_TIMES);
 
     unsigned long current_accel_time = micros();
  
@@ -125,7 +148,20 @@ void drive_ramp()
     }
 }
 
-void set_motor_pause_time(int pause_time)
+int pause_time_from_percent(int percent)
 {
-    motor_pause_time = pause_time;
+    return MAX_PAUSE_TIME_US - ((MAX_PAUSE_TIME_US - MIN_PAUSE_TIME_US) / 100) * percent;
+}
+
+void drive_speed_percent(int forward_percent, 
+                         int left_percent, 
+                         int right_percent, 
+                         int backward_percent)
+{
+    int forward_pause_time = pause_time_from_percent(forward_percent);
+    int left_pause_time = pause_time_from_percent(left_percent);
+    int right_pause_time = pause_time_from_percent(right_percent);
+    int backward_pause_time = pause_time_from_percent(backward_percent);
+
+    drive(forward_pause_time, left_pause_time, right_pause_time, backward_pause_time);
 }

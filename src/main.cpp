@@ -77,5 +77,5 @@ void loop()
 	update_horn(horn_state, 500);
 	update_motor_config(button);
 
-	drive_ramp();
+	drive_speed_percent();
 }
